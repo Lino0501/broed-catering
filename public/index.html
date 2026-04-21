@@ -310,8 +310,8 @@ async function checkDistance(){
   if(!addr){showZone('err','Bitte Adresse eingeben.');return;}
   const r=document.getElementById('zone-result');r.className='zone-result zone-ok';r.style.display='block';r.textContent='Wird berechnet…';
   try{
-    const url=`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(ORIGIN)}&destinations=${encodeURIComponent(addr)}&mode=driving&key=${GOOGLE_API_KEY}`;
-    const res=await fetch(url);const data=await res.json();
+    const res=await fetch('/api/check-distance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:addr})});
+    const data=await res.json();
     if(data.status!=='OK'||data.rows[0].elements[0].status!=='OK'){showZone('err','Adresse nicht gefunden.');return;}
     const el=data.rows[0].elements[0];applyZone(el.distance.value/1000,el.distance.text);
   }catch(e){
