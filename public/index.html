@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catering bestellen — Broed</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f6f2;color:#111;min-height:100vh}
+    .container{max-width:680px;margin:0 auto;padding:2rem 1rem 4rem}
+    h1{font-size:24px;font-weight:500;margin-bottom:.25rem}
+    .subtitle{font-size:14px;color:#666;margin-bottom:2rem}
+    .section-label{font-size:11px;font-weight:500;letter-spacing:.07em;color:#999;text-transform:uppercase;margin-bottom:.75rem;margin-top:1.5rem}
+    .card{background:white;border:1px solid #eee;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+    .delivery-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem}
+    .dt-btn{padding:10px;border-radius:8px;border:1px solid #ddd;background:white;cursor:pointer;font-size:14px;font-weight:500;color:#666;transition:all .15s;text-align:center}
+    .dt-btn.active{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+    .field{margin-bottom:.8rem}.field:last-child{margin-bottom:0}
+    .field label{display:block;font-size:12px;color:#666;margin-bottom:3px}
+    .field input,.field textarea,.field select{width:100%;font-size:13px;color:#111;background:#f7f6f2;border:1px solid #e5e5e5;border-radius:8px;padding:8px 10px;font-family:inherit}
+    .field textarea{resize:vertical;min-height:56px}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .addr-row{display:flex;gap:8px;align-items:flex-end}
+    .addr-row .field{flex:1;margin-bottom:0}
+    .check-btn{padding:8px 14px;border-radius:8px;border:1px solid #ddd;background:#f7f6f2;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap;flex-shrink:0}
+    .zone-result{border-radius:8px;padding:9px 12px;margin-top:8px;font-size:13px;display:none}
+    .zone-ok{background:#E1F5EE;border:1px solid #5DCAA5;color:#085041}
+    .zone-err{background:#FCEBEB;border:1px solid #F09595;color:#791F1F}
+    .field-hint{font-size:11px;margin-top:4px}
+    .hint-ok{color:#0F6E56}.hint-warn{color:#854F0B}.hint-neutral{color:#999}
+    .sub-cat-label{font-size:11px;font-weight:500;color:#999;letter-spacing:.05em;text-transform:uppercase;margin:1rem 0 6px;padding-bottom:4px;border-bottom:1px solid #eee}
+    .prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.5rem}
+    .prod-card{background:white;border:1px solid #eee;border-radius:12px;overflow:hidden;transition:border-color .15s;display:flex;flex-direction:column}
+    .prod-card.active{border-color:#1D9E75;border-width:2px}
+    .prod-img{width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+    .prod-body{padding:.6rem .75rem;flex:1;display:flex;flex-direction:column;gap:4px}
+    .prod-name{font-size:13px;font-weight:500}
+    .prod-desc{font-size:11px;color:#666;line-height:1.4;flex:1}
+    .prod-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+    .prod-price{font-size:12px;color:#666}
+    .qty-ctrl{display:flex;align-items:center;gap:5px}
+    .qb{width:22px;height:22px;border-radius:50%;border:1px solid #ddd;background:#f7f6f2;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;font-family:inherit}
+    .qn{font-size:13px;font-weight:500;min-width:16px;text-align:center}
+    .salat-banner{background:white;border:1px solid #eee;border-radius:12px;overflow:hidden;margin-bottom:.5rem}
+    .salat-img{width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:36px;background:#EAF3DE}
+    .salat-body{padding:.75rem 1rem}
+    .salat-name{font-size:14px;font-weight:500;margin-bottom:3px}
+    .salat-desc{font-size:12px;color:#666;line-height:1.5;margin-bottom:10px}
+    .salat-ctrl{display:flex;align-items:center;justify-content:space-between}
+    .salat-price{font-size:12px;color:#666}
+    .g-list{display:flex;flex-direction:column;gap:5px;margin-bottom:.5rem}
+    .g-row{display:flex;align-items:center;gap:10px;padding:.5rem .75rem;background:white;border:1px solid #eee;border-radius:8px;transition:border-color .12s}
+    .g-row.active{border-color:#1D9E75}
+    .g-name{flex:1;font-size:13px}
+    .g-price{font-size:12px;color:#666;min-width:44px;text-align:right}
+    .g-sub{font-size:12px;font-weight:500;color:#1D9E75;min-width:44px;text-align:right}
+    .summary{background:white;border:1px solid #eee;border-radius:12px;padding:1rem 1.25rem;margin-bottom:.75rem}
+    .sum-row{display:flex;justify-content:space-between;font-size:13px;color:#666;padding:2px 0}
+    .sum-divider{border:none;border-top:1px solid #eee;margin:8px 0}
+    .sum-total{display:flex;justify-content:space-between;font-size:15px;font-weight:500}
+    .sum-total span:last-child{color:#0F6E56}
+    .warn-bar{font-size:12px;color:#854F0B;background:#FAEEDA;border-radius:8px;padding:7px 10px;margin-bottom:.75rem;border:1px solid #EF9F27;display:none}
+    .cta{width:100%;padding:14px;border-radius:12px;background:#0F6E56;color:white;font-size:15px;font-weight:500;border:none;cursor:pointer;font-family:inherit;transition:background .15s}
+    .cta:hover{background:#085041}
+    .cta:disabled{background:#ccc;cursor:not-allowed}
+    .loading{display:none;text-align:center;padding:1rem;font-size:14px;color:#666}
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Catering bestellen</h1>
+  <p class="subtitle">Frische Sandwiches, Salate & Süsses — geliefert oder zur Abholung</p>
+
+  <div class="section-label">Lieferung oder Abholung?</div>
+  <div class="delivery-toggle">
+    <button class="dt-btn active" id="btn-delivery" onclick="setMode('delivery')">Lieferung</button>
+    <button class="dt-btn" id="btn-pickup" onclick="setMode('pickup')">Abholung</button>
+  </div>
+
+  <div class="section-label">Ihre Angaben</div>
+  <div class="card">
+    <div class="two">
+      <div class="field"><label>Vorname & Nachname</label><input type="text" id="f-name" placeholder="Maria Muster"></div>
+      <div class="field"><label>E-Mail</label><input type="email" id="f-email" placeholder="maria@firma.de"></div>
+    </div>
+    <div class="field"><label>Firma (für Rechnung)</label><input type="text" id="f-firma" placeholder="Muster GmbH"></div>
+    <div class="field"><label>Rechnungsadresse</label><input type="text" id="f-rechnung" placeholder="Strasse, Nr, PLZ, Ort"></div>
+    <div class="two">
+      <div class="field">
+        <label>Lieferdatum</label>
+        <input type="date" id="f-datum" oninput="checkDatum()">
+        <div class="field-hint hint-neutral" id="datum-hint"></div>
+      </div>
+      <div class="field">
+        <label id="zeit-label">Lieferzeit (10:00–15:00)</label>
+        <select id="f-zeit">
+          <option value="10:00">10:00 Uhr</option>
+          <option value="10:30">10:30 Uhr</option>
+          <option value="11:00">11:00 Uhr</option>
+          <option value="11:30" selected>11:30 Uhr</option>
+          <option value="12:00">12:00 Uhr</option>
+          <option value="12:30">12:30 Uhr</option>
+          <option value="13:00">13:00 Uhr</option>
+          <option value="13:30">13:30 Uhr</option>
+          <option value="14:00">14:00 Uhr</option>
+          <option value="14:30">14:30 Uhr</option>
+          <option value="15:00">15:00 Uhr</option>
+        </select>
+      </div>
+    </div>
+    <div id="delivery-fields">
+      <div class="field">
+        <label>Lieferadresse</label>
+        <div class="addr-row">
+          <div class="field"><input type="text" id="f-adresse" placeholder="Strasse, Nr, PLZ, Ort" oninput="resetZone()"></div>
+          <button class="check-btn" onclick="checkDistance()">Prüfen</button>
+        </div>
+        <div class="zone-result" id="zone-result"></div>
+      </div>
+    </div>
+    <div class="field"><label>Sonderwünsche / Allergien</label><textarea id="f-sonder" placeholder="z.B. glutenfrei, ohne Zwiebeln …"></textarea></div>
+  </div>
+
+  <div class="section-label">Sandwiches & Wraps</div>
+  <div class="sub-cat-label">Baguette</div>
+  <div class="prod-grid" id="cat-baguette"></div>
+  <div class="sub-cat-label">Bagel</div>
+  <div class="prod-grid" id="cat-bagel"></div>
+  <div class="sub-cat-label">Sauerteig Stulle</div>
+  <div class="prod-grid" id="cat-stulle"></div>
+  <div class="sub-cat-label">Ciabatta</div>
+  <div class="prod-grid" id="cat-ciabatta"></div>
+  <div class="sub-cat-label">Wrap</div>
+  <div class="prod-grid" id="cat-wrap"></div>
+
+  <div class="section-label">Salads of the Day</div>
+  <div class="salat-banner">
+    <div class="salat-img">🥗</div>
+    <div class="salat-body">
+      <div class="salat-name">Salads of the Day</div>
+      <div class="salat-desc">Je nach Saison täglich 3–4 verschiedene frische Salate. Preis pro Löffel (ca. 150g).</div>
+      <div class="salat-ctrl">
+        <span class="salat-price">€ 3,50 / Löffel</span>
+        <div class="qty-ctrl">
+          <button class="qb" onclick="changeSalat(-1)">−</button>
+          <span class="qn" id="salat-qn">0</span>
+          <button class="qb" onclick="changeSalat(1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Backwaren & Sweets</div>
+  <div class="prod-grid" id="cat-sweets"></div>
+
+  <div class="section-label">Getränke</div>
+  <div class="sub-cat-label">Wasser</div>
+  <div class="g-list" id="cat-wasser"></div>
+  <div class="sub-cat-label">Bionade & Schorlen</div>
+  <div class="g-list" id="cat-bio"></div>
+  <div class="sub-cat-label">Fritz & Co</div>
+  <div class="g-list" id="cat-fritz"></div>
+  <div class="sub-cat-label">Cola & Limonaden</div>
+  <div class="g-list" id="cat-cola"></div>
+  <div class="sub-cat-label">Energy & Wellness</div>
+  <div class="g-list" id="cat-energy"></div>
+  <div class="sub-cat-label">Saft & Shots</div>
+  <div class="g-list" id="cat-saft"></div>
+
+  <div class="warn-bar" id="warn-bar"></div>
+  <div class="summary">
+    <div id="sum-lines"><div style="font-size:13px;color:#999;text-align:center;padding:4px 0">Noch keine Produkte ausgewählt</div></div>
+    <hr class="sum-divider">
+    <div class="sum-row" id="fee-row" style="display:none"><span id="fee-label">Liefergebühr</span><span id="fee-out"></span></div>
+    <div style="height:4px"></div>
+    <div class="sum-total"><span>Gesamt inkl. MwSt.</span><span id="total-out">€ 0,00</span></div>
+  </div>
+  <button class="cta" id="cta" disabled onclick="goToCheckout()">Jetzt bezahlen</button>
+  <div class="loading" id="loading">Weiterleitung zur Zahlung…</div>
+</div>
+
+<script>
+const GOOGLE_API_KEY='AIzaSyCHA7KjioraiBY-BC2i-0gZsjd42vRKz5w';
+const ORIGIN='Taunusanlage 8, 60325 Frankfurt am Main, Germany';
+const ZONES=[{maxKm:5,minOrder:100,fee:10},{maxKm:10,minOrder:200,fee:20},{maxKm:15,minOrder:300,fee:30}];
+const MIN_HOURS=72;
+
+const SANDWICHES={
+  baguette:[
+    {id:'classique',name:'Classique Jambon',desc:'Gekochter Schinken · Comté · Römersalat · Butter · Dijon-Senf · Cornichons',price:8.5,bg:'#FFF3E0',icon:'🥖'},
+    {id:'brie',name:'Brie Amore',desc:'Brie · Preiselbeermarmelade · Walnüsse · Tomate · Römersalat · Butter',price:9.0,bg:'#FFF8E1',icon:'🥖'},
+    {id:'beef',name:'Beef Royale',desc:'Roastbeef · Gruyère · Zwiebelmarmelade · Römersalat · Eingelegte Paprika · Dijon Senf',price:10.0,bg:'#FBE9E7',icon:'🥖'},
+  ],
+  bagel:[
+    {id:'lox',name:'New York City Lox',desc:'Lachs · Tomate · Rote Zwiebel · Kapern · Frischkäse',price:9.5,bg:'#E8F5E9',icon:'🥯'},
+    {id:'turkey',name:'Turkey Smash',desc:'Putenbrust · Emmentaler · Avocado · Römersalat · Grüner Pesto-Frischkäse',price:9.0,bg:'#E8F5E9',icon:'🥯'},
+    {id:'caprese',name:'Caprese',desc:'Tomate · Mozzarella · Rucola · Roter Pesto-Frischkäse',price:9.0,bg:'#FCE4EC',icon:'🥯'},
+  ],
+  stulle:[
+    {id:'avotomo',name:'AvoTomo',desc:'Avocado · Tomate · Spinat · Gurke · Hummus',price:8.5,bg:'#E8F5E9',icon:'🍞'},
+    {id:'spicy',name:'Spicy Salami',desc:'Salami · Provolone · Römersalat · Tomate · Roter Pesto-Frischkäse',price:8.5,bg:'#FBE9E7',icon:'🍞'},
+    {id:'pistachio',name:'Pistacchio Piccolo',desc:'Mortadella · Mozzarella · Rucola · Tomate · Pistazien · Balsamico · Grüner Pesto-Frischkäse',price:9.5,bg:'#F3E5F5',icon:'🍞'},
+    {id:'tunacado',name:'Tunacado',desc:'Thunfischcreme · Avocado · Spinat · Tomate · Frischkäse',price:9.5,bg:'#E3F2FD',icon:'🍞'},
+  ],
+  ciabatta:[
+    {id:'truff',name:'Truff Lover',desc:'Parmaschinken · Mozzarella · Rucola · Birne · Trüffel-Frischkäse',price:10.0,bg:'#F3E5F5',icon:'🫓'},
+    {id:'caesar_ciab',name:'Chopped Caesar Ciabatta',desc:'Hähnchen · Parmesan · Römersalat · Tomate · Caesar Dressing',price:10.0,bg:'#FFF3E0',icon:'🫓'},
+  ],
+  wrap:[
+    {id:'falafel',name:'Chopped Falafel',desc:'Falafel · Hummus · Römersalat · Tomate · Rote Zwiebeln · Cornichons · Geröstete Sesamsoße',price:8.5,bg:'#E8F5E9',icon:'🌯'},
+    {id:'caesar_wrap',name:'Chopped Caesar Wrap',desc:'Hähnchen · Parmesan · Römersalat · Tomate · Caesar Dressing',price:9.5,bg:'#FFF3E0',icon:'🌯'},
+    {id:'eggaway',name:'Eggaway',desc:'Eiersalat · Römersalat · Tomate · Emmentaler · Frischkäse',price:9.5,bg:'#FFF8E1',icon:'🌯'},
+  ],
+};
+const SWEETS=[
+  {id:'kaese',name:'Käsetörtchen',price:3.9,bg:'#FFFDE7',icon:'🧁'},
+  {id:'croissant',name:'Mini Croissant',price:1.0,bg:'#FFF8E1',icon:'🥐'},
+  {id:'pain_choc',name:'Mini Pain au Chocolat',price:1.2,bg:'#EFEBE9',icon:'🥐'},
+  {id:'zimt',name:'Vegane Zimtschnecke',price:3.9,bg:'#FFF3E0',icon:'🌀'},
+  {id:'brezel',name:'Butter Brezel',price:3.0,bg:'#FFF8E1',icon:'🥨'},
+  {id:'mandorlini',name:'Mandorlini',price:2.5,bg:'#F3E5F5',icon:'🍬'},
+  {id:'brownie',name:'Brownie Ball',price:2.5,bg:'#EFEBE9',icon:'🍫'},
+  {id:'brioche',name:'Caramel Brioche',price:3.9,bg:'#FFF3E0',icon:'🍞'},
+];
+const GETRAENKE={
+  wasser:[
+    {id:'pellegrino_07',name:'San Pellegrino 0,7l',price:6.5,icon:'💧'},
+    {id:'pellegrino_02',name:'San Pellegrino 0,2l',price:2.5,icon:'💧'},
+    {id:'acqua_07',name:'Acqua Panna 0,7l',price:6.5,icon:'💧'},
+    {id:'acqua_02',name:'Acqua Panna 0,2l',price:2.5,icon:'💧'},
+  ],
+  bio:[
+    {id:'voelkel',name:'Biozisch Voelkel Schorle',price:3.5,icon:'🫧'},
+    {id:'bionade_holunder',name:'Bionade Holunder',price:3.5,icon:'🫧'},
+    {id:'bionade_orange',name:'Bionade Naturtrübe Orange',price:3.5,icon:'🫧'},
+    {id:'bionade_zitrone',name:'Naturtrübe Zitrone',price:3.5,icon:'🫧'},
+    {id:'bionade_blut',name:'Naturtrübe Blutorange',price:3.5,icon:'🫧'},
+    {id:'bionade_joh',name:'Bionade Schwarze Johannisbeere-Rosmarin',price:3.5,icon:'🫧'},
+    {id:'kombucha',name:'Bouche Kombucha',price:4.0,icon:'🫧'},
+  ],
+  fritz:[
+    {id:'fritz_ingwer',name:'Fritz — Ingwer Limette',price:3.9,icon:'🍋'},
+    {id:'fritz_traube',name:'Fritz — Traube',price:3.9,icon:'🍋'},
+    {id:'fritz_apfel',name:'Fritz — Apfel',price:3.9,icon:'🍋'},
+    {id:'fritz_rhabarber',name:'Fritz — Rhabarber',price:3.9,icon:'🍋'},
+    {id:'fever_tree',name:'Fever Tree',price:3.5,icon:'🍋'},
+    {id:'paloma',name:'Paloma Lemonade Pink Grapefruit',price:3.5,icon:'🍋'},
+  ],
+  cola:[
+    {id:'cola',name:'Coca Cola',price:3.3,icon:'🥤'},
+    {id:'cola_light',name:'Coca Cola Light',price:3.3,icon:'🥤'},
+    {id:'cola_zero',name:'Coca Cola Zero',price:3.3,icon:'🥤'},
+    {id:'mate',name:'Mate',price:3.8,icon:'🥤'},
+    {id:'orangina',name:'Orangina Orange',price:3.9,icon:'🥤'},
+    {id:'fuze_zitrone',name:'Fuze Tea Zitrone',price:3.3,icon:'🥤'},
+    {id:'fuze_pfirsich',name:'Fuze Tea Pfirsich',price:3.3,icon:'🥤'},
+    {id:'mono_eis',name:'Mono Eis Tee',price:3.9,icon:'🥤'},
+  ],
+  energy:[
+    {id:'redbull_norm',name:'Red Bull Normal',price:4.0,icon:'⚡'},
+    {id:'redbull_free',name:'Red Bull Sugar Free',price:4.0,icon:'⚡'},
+    {id:'vitwell_anti',name:'Vitamin Well Antioxidant',price:3.9,icon:'⚡'},
+    {id:'vitwell_hyd',name:'Vitamin Well Hydrate',price:3.9,icon:'⚡'},
+    {id:'vitwell_rel',name:'Vitamin Well Reload',price:3.9,icon:'⚡'},
+  ],
+  saft:[
+    {id:'oj',name:'Orangensaft',price:4.5,icon:'🍊'},
+    {id:'ingwer_shot',name:'Ingwer Shot',price:2.5,icon:'🍊'},
+  ],
+};
+
+let qty={},salatQty=0,mode='delivery',currentZone=null,distanceKm=null,datumOk=false;
+Object.values(SANDWICHES).flat().forEach(p=>qty[p.id]=0);
+SWEETS.forEach(p=>qty[p.id]=0);
+Object.values(GETRAENKE).flat().forEach(p=>qty[p.id]=0);
+
+function fmt(n){return n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function getMinDate(){const d=new Date(Date.now()+72*3600*1000);return d.toISOString().split('T')[0]}
+function formatDE(s){const[y,m,d]=s.split('-');return`${d}.${m}.${y}`}
+
+function initDatum(){
+  const inp=document.getElementById('f-datum');
+  const min=getMinDate();inp.min=min;
+  document.getElementById('datum-hint').textContent=`Frühestmöglich: ${formatDE(min)}`;
+}
+function checkDatum(){
+  const val=document.getElementById('f-datum').value;
+  const hint=document.getElementById('datum-hint');
+  const min=getMinDate();
+  if(!val){hint.textContent=`Frühestmöglich: ${formatDE(min)}`;hint.className='field-hint hint-neutral';datumOk=false;}
+  else if(val<min){hint.textContent=`Bitte mind. 72h im Voraus. Frühestmöglich: ${formatDE(min)}`;hint.className='field-hint hint-warn';datumOk=false;}
+  else{hint.textContent=`Termin am ${formatDE(val)} verfügbar`;hint.className='field-hint hint-ok';datumOk=true;}
+  update();
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('btn-delivery').classList.toggle('active',m==='delivery');
+  document.getElementById('btn-pickup').classList.toggle('active',m==='pickup');
+  document.getElementById('delivery-fields').style.display=m==='delivery'?'':'none';
+  document.getElementById('zeit-label').textContent=m==='delivery'?'Lieferzeit (10:00–15:00)':'Abholzeit (10:00–15:00)';
+  if(m==='pickup'){currentZone=null;distanceKm=null;}
+  update();
+}
+function resetZone(){
+  currentZone=null;distanceKm=null;
+  const r=document.getElementById('zone-result');r.style.display='none';update();
+}
+async function checkDistance(){
+  const addr=document.getElementById('f-adresse').value.trim();
+  if(!addr){showZone('err','Bitte Adresse eingeben.');return;}
+  const r=document.getElementById('zone-result');r.className='zone-result zone-ok';r.style.display='block';r.textContent='Wird berechnet…';
+  try{
+    const url=`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(ORIGIN)}&destinations=${encodeURIComponent(addr)}&mode=driving&key=${GOOGLE_API_KEY}`;
+    const res=await fetch(url);const data=await res.json();
+    if(data.status!=='OK'||data.rows[0].elements[0].status!=='OK'){showZone('err','Adresse nicht gefunden.');return;}
+    const el=data.rows[0].elements[0];applyZone(el.distance.value/1000,el.distance.text);
+  }catch(e){
+    const mx=addr.match(/\b(6\d{4})\b/);let km=8;
+    if(mx){const p=parseInt(mx[1]);if(p>=60306&&p<=60329)km=2;else if(p>=60300&&p<=60389)km=5;else if(p>=60390&&p<=60599)km=9;else if(p>=60600&&p<=65936)km=13;else km=22;}
+    applyZone(km,km.toFixed(1)+' km');
+  }
+}
+function applyZone(km,label){
+  distanceKm=km;const zone=ZONES.find(z=>km<=z.maxKm);
+  if(!zone){currentZone=null;showZone('err',`Ca. ${label} — ausserhalb Liefergebiet (max. 15 km).`);}
+  else{currentZone=zone;showZone('ok',`Ca. ${label} · Liefergebühr € ${fmt(zone.fee)} · Mindestbestellung € ${fmt(zone.minOrder)}`);}
+  update();
+}
+function showZone(t,msg){const r=document.getElementById('zone-result');r.className='zone-result zone-'+t;r.style.display='block';r.textContent=msg;}
+
+function change(id,d){qty[id]=Math.max(0,qty[id]+d);renderAll();update();}
+function changeSalat(d){salatQty=Math.max(0,salatQty+d);document.getElementById('salat-qn').textContent=salatQty;update();}
+function changeG(id,d){qty[id]=Math.max(0,qty[id]+d);renderGetraenke();update();}
+
+function prodCard(p,fn){
+  return`<div class="prod-card${qty[p.id]>0?' active':''}">
+    <div class="prod-img" style="background:${p.bg}">${p.icon}</div>
+    <div class="prod-body">
+      <div class="prod-name">${p.name}</div>
+      <div class="prod-desc">${p.desc||''}</div>
+      <div class="prod-footer">
+        <span class="prod-price">€ ${fmt(p.price)}</span>
+        <div class="qty-ctrl">
+          <button class="qb" onclick="${fn}('${p.id}',-1)">−</button>
+          <span class="qn">${qty[p.id]}</span>
+          <button class="qb" onclick="${fn}('${p.id}',1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function renderAll(){
+  Object.entries(SANDWICHES).forEach(([c,ps])=>document.getElementById('cat-'+c).innerHTML=ps.map(p=>prodCard(p,'change')).join(''));
+  document.getElementById('cat-sweets').innerHTML=SWEETS.map(p=>prodCard(p,'change')).join('');
+}
+function renderGetraenke(){
+  Object.entries(GETRAENKE).forEach(([c,ps])=>{
+    document.getElementById('cat-'+c).innerHTML=ps.map(p=>`
+      <div class="g-row${qty[p.id]>0?' active':''}">
+        <span style="font-size:16px">${p.icon}</span>
+        <span class="g-name">${p.name}</span>
+        <span class="g-price">€ ${fmt(p.price)}</span>
+        <div class="qty-ctrl">
+          <button class="qb" onclick="changeG('${p.id}',-1)">−</button>
+          <span class="qn">${qty[p.id]}</span>
+          <button class="qb" onclick="changeG('${p.id}',1)">+</button>
+        </div>
+        <span class="g-sub">${qty[p.id]>0?'€ '+fmt(qty[p.id]*p.price):''}</span>
+      </div>`).join('');
+  });
+}
+
+function getTotal(){
+  const allS=Object.values(SANDWICHES).flat();
+  const allG=Object.values(GETRAENKE).flat();
+  return allS.reduce((s,p)=>s+qty[p.id]*p.price,0)+SWEETS.reduce((s,p)=>s+qty[p.id]*p.price,0)+allG.reduce((s,p)=>s+qty[p.id]*p.price,0)+salatQty*3.5;
+}
+
+function update(){
+  const allS=Object.values(SANDWICHES).flat();
+  const allG=Object.values(GETRAENKE).flat();
+  const selS=allS.filter(p=>qty[p.id]>0);
+  const selW=SWEETS.filter(p=>qty[p.id]>0);
+  const selG=allG.filter(p=>qty[p.id]>0);
+  const sub=getTotal();
+  const fee=mode==='delivery'&&currentZone?currentZone.fee:0;
+  const minOrd=mode==='delivery'&&currentZone?currentZone.minOrder:0;
+
+  const lines=[
+    ...selS.map(p=>`<div class="sum-row"><span>${p.name} × ${qty[p.id]}</span><span>€ ${fmt(qty[p.id]*p.price)}</span></div>`),
+    ...(salatQty>0?[`<div class="sum-row"><span>Salads of the Day × ${salatQty} Löffel</span><span>€ ${fmt(salatQty*3.5)}</span></div>`]:[]),
+    ...selW.map(p=>`<div class="sum-row"><span>${p.name} × ${qty[p.id]}</span><span>€ ${fmt(qty[p.id]*p.price)}</span></div>`),
+    ...selG.map(p=>`<div class="sum-row"><span>${p.name} × ${qty[p.id]}</span><span>€ ${fmt(qty[p.id]*p.price)}</span></div>`),
+  ];
+  document.getElementById('sum-lines').innerHTML=lines.length?lines.join(''):'<div style="font-size:13px;color:#999;text-align:center;padding:4px 0">Noch keine Produkte ausgewählt</div>';
+
+  const fr=document.getElementById('fee-row');
+  if(mode==='delivery'&&currentZone){fr.style.display='flex';document.getElementById('fee-out').textContent='€ '+fmt(fee);document.getElementById('fee-label').textContent=`Liefergebühr (${Math.round(distanceKm||0)} km)`;}
+  else fr.style.display='none';
+  document.getElementById('total-out').textContent='€ '+fmt(sub+fee);
+
+  const warn=document.getElementById('warn-bar');const cta=document.getElementById('cta');
+  let msg='';
+  if(sub===0)msg='';
+  else if(!datumOk)msg='Bitte gültiges Datum wählen (mind. 72h Vorlauf).';
+  else if(mode==='delivery'&&!currentZone&&distanceKm===null)msg='Bitte Lieferadresse eingeben und prüfen.';
+  else if(mode==='delivery'&&!currentZone&&distanceKm!==null)msg='Lieferung nicht möglich — ausserhalb des Liefergebiets.';
+  else if(mode==='delivery'&&currentZone&&sub<minOrd)msg=`Mindestbestellwert: € ${fmt(minOrd)}. Noch € ${fmt(minOrd-sub)} fehlend.`;
+
+  if(msg){warn.style.display='block';warn.textContent=msg;cta.disabled=true;}
+  else if(sub===0){warn.style.display='none';cta.disabled=true;}
+  else{warn.style.display='none';cta.disabled=false;}
+}
+
+async function goToCheckout(){
+  const allS=Object.values(SANDWICHES).flat();
+  const allG=Object.values(GETRAENKE).flat();
+  const bestellungLines=[
+    ...allS.filter(p=>qty[p.id]>0).map(p=>`${p.name} x${qty[p.id]}`),
+    ...(salatQty>0?[`Salads of the Day x${salatQty} Löffel`]:[]),
+    ...SWEETS.filter(p=>qty[p.id]>0).map(p=>`${p.name} x${qty[p.id]}`),
+    ...allG.filter(p=>qty[p.id]>0).map(p=>`${p.name} x${qty[p.id]}`),
+  ];
+  const sub=getTotal();
+  const fee=mode==='delivery'&&currentZone?currentZone.fee:0;
+  const total=sub+fee;
+
+  const payload={
+    name:document.getElementById('f-name').value,
+    email:document.getElementById('f-email').value,
+    firma:document.getElementById('f-firma').value,
+    datum:document.getElementById('f-datum').value,
+    uhrzeit:document.getElementById('f-zeit').value,
+    modus:mode==='delivery'?`Lieferung (${Math.round(distanceKm||0)}km)`:'Abholung',
+    adresse:mode==='delivery'?document.getElementById('f-adresse').value:'Abholung Taunusanlage 8',
+    bestellung:bestellungLines.join(', '),
+    sonder:document.getElementById('f-sonder').value,
+    total:total,
+  };
+
+  document.getElementById('cta').disabled=true;
+  document.getElementById('loading').style.display='block';
+
+  try{
+    const res=await fetch('/api/create-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(data.url){window.location.href=data.url;}
+    else{alert('Fehler beim Erstellen der Zahlung. Bitte erneut versuchen.');document.getElementById('cta').disabled=false;document.getElementById('loading').style.display='none';}
+  }catch(e){
+    alert('Verbindungsfehler. Bitte erneut versuchen.');
+    document.getElementById('cta').disabled=false;
+    document.getElementById('loading').style.display='none';
+  }
+}
+
+initDatum();renderAll();renderGetraenke();update();
+</script>
+</body>
+</html>
