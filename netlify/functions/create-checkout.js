@@ -33,7 +33,6 @@ exports.handler = async (event) => {
         bestellung: data.bestellung,
         sonder: data.sonder,
       },
-      invoice_creation: { enabled: true },
       success_url: `${process.env.URL}/success.html`,
       cancel_url: `${process.env.URL}/`,
     });
