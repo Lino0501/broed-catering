@@ -7,6 +7,10 @@ exports.handler = async (event) => {
 
   try {
     const data = JSON.parse(event.body);
+    
+    console.log('Stripe Key exists:', !!process.env.STRIPE_SECRET_KEY);
+    console.log('Total:', data.total);
+    console.log('Email:', data.email);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -15,7 +19,6 @@ exports.handler = async (event) => {
           currency: 'eur',
           product_data: {
             name: 'Catering-Bestellung Broed',
-            description: data.bestellung ? data.bestellung.substring(0, 200) : 'Catering',
           },
           unit_amount: Math.round(data.total * 100),
         },
@@ -23,15 +26,6 @@ exports.handler = async (event) => {
       }],
       mode: 'payment',
       customer_email: data.email,
-      metadata: {
-        name: data.name || '',
-        firma: data.firma || '',
-        datum: data.datum || '',
-        uhrzeit: data.uhrzeit || '',
-        modus: data.modus || '',
-        adresse: data.adresse || '',
-        sonder: data.sonder || '',
-      },
       success_url: 'https://teal-capybara-c25b9e.netlify.app/success.html',
       cancel_url: 'https://teal-capybara-c25b9e.netlify.app/',
     });
@@ -42,10 +36,12 @@ exports.handler = async (event) => {
       body: JSON.stringify({ url: session.url }),
     };
   } catch (err) {
+    console.log('Stripe error:', err.message);
+    console.log('Error type:', err.type);
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: err.message, type: err.type }),
+      body: JSON.stringify({ error: err.message }),
     };
   }
 };
