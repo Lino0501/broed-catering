@@ -26,6 +26,7 @@ exports.handler = async (event) => {
       }],
       mode: 'payment',
       billing_address_collection: 'required',
+invoice_creation: { enabled: true },
       customer_email: data.email,
       success_url: 'https://teal-capybara-c25b9e.netlify.app/success.html',
       cancel_url: 'https://teal-capybara-c25b9e.netlify.app/',
