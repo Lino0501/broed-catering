@@ -25,6 +25,7 @@ exports.handler = async (event) => {
         quantity: 1,
       }],
       mode: 'payment',
+      billing_address_collection: 'required',
       customer_email: data.email,
       success_url: 'https://teal-capybara-c25b9e.netlify.app/success.html',
       cancel_url: 'https://teal-capybara-c25b9e.netlify.app/',
