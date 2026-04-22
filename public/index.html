@@ -286,7 +286,7 @@ function formatDE(s){const[y,m,d]=s.split('-');return`${d}.${m}.${y}`}
 
 function imgTag(p,height='90px'){
   if(p.img){
-    return`<img src="/${p.img}" alt="${p.name}" style="width:100%;height:${height};object-fit:cover;display:block;" onerror="this.parentElement.innerHTML='<span style=\\"font-size:28px\\">${p.icon}</span>';this.parentElement.style.background='${p.bg||'#f7f6f2'}'">`;
+    return`<img src="/images/${p.img}" alt="${p.name}" style="width:100%;height:${height};object-fit:cover;display:block;" onerror="this.parentElement.innerHTML='<span style=\\"font-size:28px\\">${p.icon}</span>';this.parentElement.style.background='${p.bg||'#f7f6f2'}'">`;
   }
   return`<span style="font-size:28px">${p.icon}</span>`;
 }
@@ -352,7 +352,7 @@ function changeG(id,d){qty[id]=Math.max(0,qty[id]+d);renderGetraenke();update();
 
 function prodCard(p,fn){
   const imgContent=p.img
-    ?`<img src="/${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.classList.add('emoji-fallback');this.parentElement.innerHTML='<span style=\\"font-size:28px\\">${p.icon}</span>';this.parentElement.style.background='${p.bg}'">`
+    ?`<img src="/images/${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.parentElement.style.background='${p.bg}';this.parentElement.innerHTML='<span style=&quot;font-size:28px&quot;>${p.icon}</span>'">`
     :`<span style="font-size:28px">${p.icon}</span>`;
   const imgBg=p.img?'#f0eeea':p.bg;
   return`<div class="prod-card${qty[p.id]>0?' active':''}">
@@ -381,7 +381,7 @@ function renderGetraenke(){
   Object.entries(GETRAENKE).forEach(([c,ps])=>{
     document.getElementById('cat-'+c).innerHTML=ps.map(p=>{
       const thumbContent=p.img
-        ?`<img src="/${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=\\"font-size:16px\\">${p.icon}</span>'">`
+        ?`<img src="/images/${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=&quot;font-size:16px&quot;>${p.icon}</span>'">`
         :`<span style="font-size:16px">${p.icon}</span>`;
       return`<div class="g-row${qty[p.id]>0?' active':''}">
         <div class="g-thumb">${thumbContent}</div>
