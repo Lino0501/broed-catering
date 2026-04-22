@@ -32,7 +32,9 @@
     .prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.5rem}
     .prod-card{background:white;border:1px solid #eee;border-radius:12px;overflow:hidden;transition:border-color .15s;display:flex;flex-direction:column}
     .prod-card.active{border-color:#1D9E75;border-width:2px}
-    .prod-img{width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+    .prod-img{width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden}
+    .prod-img img{width:100%;height:100%;object-fit:cover;display:block}
+    .prod-img.emoji-fallback{font-size:28px}
     .prod-body{padding:.6rem .75rem;flex:1;display:flex;flex-direction:column;gap:4px}
     .prod-name{font-size:13px;font-weight:500}
     .prod-desc{font-size:11px;color:#666;line-height:1.4;flex:1}
@@ -51,6 +53,8 @@
     .g-list{display:flex;flex-direction:column;gap:5px;margin-bottom:.5rem}
     .g-row{display:flex;align-items:center;gap:10px;padding:.5rem .75rem;background:white;border:1px solid #eee;border-radius:8px;transition:border-color .12s}
     .g-row.active{border-color:#1D9E75}
+    .g-thumb{width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;background:#f7f6f2}
+    .g-thumb img{width:100%;height:100%;object-fit:cover}
     .g-name{flex:1;font-size:13px}
     .g-price{font-size:12px;color:#666;min-width:44px;text-align:right}
     .g-sub{font-size:12px;font-weight:500;color:#1D9E75;min-width:44px;text-align:right}
@@ -84,8 +88,6 @@
       <div class="field"><label>Nachname</label><input type="text" id="f-nachname" placeholder="Muster"></div>
     </div>
     <div class="field"><label>E-Mail</label><input type="email" id="f-email" placeholder="maria@firma.de"></div>
-    <div class="two">
-    </div>
     <div class="field"><label>Firma (für Rechnung)</label><input type="text" id="f-firma" placeholder="Muster GmbH"></div>
     <div class="field"><label>Telefonnummer</label><input type="tel" id="f-tel" placeholder="+49 123 456789"></div>
     <div class="field"><label>Rechnungsadresse</label><input type="text" id="f-rechnung" placeholder="Strasse, Nr, PLZ, Ort"></div>
@@ -187,89 +189,89 @@
 const GOOGLE_API_KEY='AIzaSyCHA7KjioraiBY-BC2i-0gZsjd42vRKz5w';
 const ORIGIN='Taunusanlage 8, 60325 Frankfurt am Main, Germany';
 const ZONES=[{maxKm:5,minOrder:100,fee:10},{maxKm:10,minOrder:200,fee:20},{maxKm:15,minOrder:300,fee:30}];
-const MIN_HOURS=72;
 
+// img: filename in /public/ (without path), or null to use emoji fallback
 const SANDWICHES={
   baguette:[
-    {id:'classique',name:'Classique Jambon',desc:'Gekochter Schinken · Comté · Römersalat · Butter · Dijon-Senf · Cornichons',price:8.5,bg:'#FFF3E0',icon:'🥖'},
-    {id:'brie',name:'Brie Amore',desc:'Brie · Preiselbeermarmelade · Walnüsse · Tomate · Römersalat · Butter',price:9.0,bg:'#FFF8E1',icon:'🥖'},
-    {id:'beef',name:'Beef Royale',desc:'Roastbeef · Gruyère · Zwiebelmarmelade · Römersalat · Eingelegte Paprika · Dijon Senf',price:10.0,bg:'#FBE9E7',icon:'🥖'},
+    {id:'classique',name:'Classique Jambon',desc:'Gekochter Schinken · Comté · Römersalat · Butter · Dijon-Senf · Cornichons',price:8.5,bg:'#FFF3E0',icon:'🥖',img:'classique.png'},
+    {id:'brie',name:'Brie Amore',desc:'Brie · Preiselbeermarmelade · Walnüsse · Tomate · Römersalat · Butter',price:9.0,bg:'#FFF8E1',icon:'🥖',img:null},
+    {id:'beef',name:'Beef Royale',desc:'Roastbeef · Gruyère · Zwiebelmarmelade · Römersalat · Eingelegte Paprika · Dijon Senf',price:10.0,bg:'#FBE9E7',icon:'🥖',img:null},
   ],
   bagel:[
-    {id:'lox',name:'New York City Lox',desc:'Lachs · Tomate · Rote Zwiebel · Kapern · Frischkäse',price:9.5,bg:'#E8F5E9',icon:'🥯'},
-    {id:'turkey',name:'Turkey Smash',desc:'Putenbrust · Emmentaler · Avocado · Römersalat · Grüner Pesto-Frischkäse',price:9.0,bg:'#E8F5E9',icon:'🥯'},
-    {id:'caprese',name:'Caprese',desc:'Tomate · Mozzarella · Rucola · Roter Pesto-Frischkäse',price:9.0,bg:'#FCE4EC',icon:'🥯'},
+    {id:'lox',name:'New York City Lox',desc:'Lachs · Tomate · Rote Zwiebel · Kapern · Frischkäse',price:9.5,bg:'#E8F5E9',icon:'🥯',img:'lox.png'},
+    {id:'turkey',name:'Turkey Smash',desc:'Putenbrust · Emmentaler · Avocado · Römersalat · Grüner Pesto-Frischkäse',price:9.0,bg:'#E8F5E9',icon:'🥯',img:'turkey.png'},
+    {id:'caprese',name:'Caprese',desc:'Tomate · Mozzarella · Rucola · Roter Pesto-Frischkäse',price:9.0,bg:'#FCE4EC',icon:'🥯',img:'caprese.png'},
   ],
   stulle:[
-    {id:'avotomo',name:'AvoTomo',desc:'Avocado · Tomate · Spinat · Gurke · Hummus',price:8.5,bg:'#E8F5E9',icon:'🍞'},
-    {id:'spicy',name:'Spicy Salami',desc:'Salami · Provolone · Römersalat · Tomate · Roter Pesto-Frischkäse',price:8.5,bg:'#FBE9E7',icon:'🍞'},
-    {id:'pistachio',name:'Pistacchio Piccolo',desc:'Mortadella · Mozzarella · Rucola · Tomate · Pistazien · Balsamico · Grüner Pesto-Frischkäse',price:9.5,bg:'#F3E5F5',icon:'🍞'},
-    {id:'tunacado',name:'Tunacado',desc:'Thunfischcreme · Avocado · Spinat · Tomate · Frischkäse',price:9.5,bg:'#E3F2FD',icon:'🍞'},
+    {id:'avotomo',name:'AvoTomo',desc:'Avocado · Tomate · Spinat · Gurke · Hummus',price:8.5,bg:'#E8F5E9',icon:'🍞',img:null},
+    {id:'spicy',name:'Spicy Salami',desc:'Salami · Provolone · Römersalat · Tomate · Roter Pesto-Frischkäse',price:8.5,bg:'#FBE9E7',icon:'🍞',img:'spicy.png'},
+    {id:'pistachio',name:'Pistacchio Piccolo',desc:'Mortadella · Mozzarella · Rucola · Tomate · Pistazien · Balsamico · Grüner Pesto-Frischkäse',price:9.5,bg:'#F3E5F5',icon:'🍞',img:'pistachio.png'},
+    {id:'tunacado',name:'Tunacado',desc:'Thunfischcreme · Avocado · Spinat · Tomate · Frischkäse',price:9.5,bg:'#E3F2FD',icon:'🍞',img:'tunacado.png'},
   ],
   ciabatta:[
-    {id:'truff',name:'Truff Lover',desc:'Parmaschinken · Mozzarella · Rucola · Birne · Trüffel-Frischkäse',price:10.0,bg:'#F3E5F5',icon:'🫓'},
-    {id:'caesar_ciab',name:'Chopped Caesar Ciabatta',desc:'Hähnchen · Parmesan · Römersalat · Tomate · Caesar Dressing',price:10.0,bg:'#FFF3E0',icon:'🫓'},
+    {id:'truff',name:'Truff Lover',desc:'Parmaschinken · Mozzarella · Rucola · Birne · Trüffel-Frischkäse',price:10.0,bg:'#F3E5F5',icon:'🫓',img:'truff.png'},
+    {id:'caesar_ciab',name:'Chopped Caesar Ciabatta',desc:'Hähnchen · Parmesan · Römersalat · Tomate · Caesar Dressing',price:10.0,bg:'#FFF3E0',icon:'🫓',img:'caesar_ciab.png'},
   ],
   wrap:[
-    {id:'falafel',name:'Chopped Falafel',desc:'Falafel · Hummus · Römersalat · Tomate · Rote Zwiebeln · Cornichons · Geröstete Sesamsoße',price:8.5,bg:'#E8F5E9',icon:'🌯'},
-    {id:'caesar_wrap',name:'Chopped Caesar Wrap',desc:'Hähnchen · Parmesan · Römersalat · Tomate · Caesar Dressing',price:9.5,bg:'#FFF3E0',icon:'🌯'},
-    {id:'eggaway',name:'Eggaway',desc:'Eiersalat · Römersalat · Tomate · Emmentaler · Frischkäse',price:9.5,bg:'#FFF8E1',icon:'🌯'},
+    {id:'falafel',name:'Chopped Falafel',desc:'Falafel · Hummus · Römersalat · Tomate · Rote Zwiebeln · Cornichons · Geröstete Sesamsoße',price:8.5,bg:'#E8F5E9',icon:'🌯',img:'falafel.png'},
+    {id:'caesar_wrap',name:'Chopped Caesar Wrap',desc:'Hähnchen · Parmesan · Römersalat · Tomate · Caesar Dressing',price:9.5,bg:'#FFF3E0',icon:'🌯',img:'caesar_wrap.png'},
+    {id:'eggaway',name:'Eggaway',desc:'Eiersalat · Römersalat · Tomate · Emmentaler · Frischkäse',price:9.5,bg:'#FFF8E1',icon:'🌯',img:'eggaway.png'},
   ],
 };
 const SWEETS=[
-  {id:'kaese',name:'Käsetörtchen',price:3.9,bg:'#FFFDE7',icon:'🧁'},
-  {id:'croissant',name:'Mini Croissant',price:1.0,bg:'#FFF8E1',icon:'🥐'},
-  {id:'pain_choc',name:'Mini Pain au Chocolat',price:1.2,bg:'#EFEBE9',icon:'🥐'},
-  {id:'zimt',name:'Vegane Zimtschnecke',price:3.9,bg:'#FFF3E0',icon:'🌀'},
-  {id:'brezel',name:'Butter Brezel',price:3.0,bg:'#FFF8E1',icon:'🥨'},
-  {id:'mandorlini',name:'Mandorlini',price:2.5,bg:'#F3E5F5',icon:'🍬'},
-  {id:'brownie',name:'Brownie Ball',price:2.5,bg:'#EFEBE9',icon:'🍫'},
-  {id:'brioche',name:'Caramel Brioche',price:3.9,bg:'#FFF3E0',icon:'🍞'},
+  {id:'kaese',name:'Käsetörtchen',price:3.9,bg:'#FFFDE7',icon:'🧁',img:null},
+  {id:'croissant',name:'Mini Croissant',price:1.0,bg:'#FFF8E1',icon:'🥐',img:'croissant.png'},
+  {id:'pain_choc',name:'Mini Pain au Chocolat',price:1.2,bg:'#EFEBE9',icon:'🥐',img:'pain_choc.png'},
+  {id:'zimt',name:'Vegane Zimtschnecke',price:3.9,bg:'#FFF3E0',icon:'🌀',img:'zimt.png'},
+  {id:'brezel',name:'Butter Brezel',price:3.0,bg:'#FFF8E1',icon:'🥨',img:'brezel.png'},
+  {id:'mandorlini',name:'Mandorlini',price:2.5,bg:'#F3E5F5',icon:'🍬',img:null},
+  {id:'brownie',name:'Brownie Ball',price:2.5,bg:'#EFEBE9',icon:'🍫',img:null},
+  {id:'brioche',name:'Caramel Brioche',price:3.9,bg:'#FFF3E0',icon:'🍞',img:null},
 ];
 const GETRAENKE={
   wasser:[
-    {id:'pellegrino_07',name:'San Pellegrino 0,7l',price:6.5,icon:'💧'},
-    {id:'pellegrino_02',name:'San Pellegrino 0,2l',price:2.5,icon:'💧'},
-    {id:'acqua_07',name:'Acqua Panna 0,7l',price:6.5,icon:'💧'},
-    {id:'acqua_02',name:'Acqua Panna 0,2l',price:2.5,icon:'💧'},
+    {id:'pellegrino_07',name:'San Pellegrino 0,7l',price:6.5,icon:'💧',img:null},
+    {id:'pellegrino_02',name:'San Pellegrino 0,2l',price:2.5,icon:'💧',img:null},
+    {id:'acqua_07',name:'Acqua Panna 0,7l',price:6.5,icon:'💧',img:null},
+    {id:'acqua_02',name:'Acqua Panna 0,2l',price:2.5,icon:'💧',img:null},
   ],
   bio:[
-    {id:'voelkel',name:'Biozisch Voelkel Schorle',price:3.5,icon:'🫧'},
-    {id:'bionade_holunder',name:'Bionade Holunder',price:3.5,icon:'🫧'},
-    {id:'bionade_orange',name:'Bionade Naturtrübe Orange',price:3.5,icon:'🫧'},
-    {id:'bionade_zitrone',name:'Naturtrübe Zitrone',price:3.5,icon:'🫧'},
-    {id:'bionade_blut',name:'Naturtrübe Blutorange',price:3.5,icon:'🫧'},
-    {id:'bionade_joh',name:'Bionade Schwarze Johannisbeere-Rosmarin',price:3.5,icon:'🫧'},
-    {id:'kombucha',name:'Bouche Kombucha',price:4.0,icon:'🫧'},
+    {id:'voelkel',name:'Biozisch Voelkel Schorle',price:3.5,icon:'🫧',img:null},
+    {id:'bionade_holunder',name:'Bionade Holunder',price:3.5,icon:'🫧',img:'bionade_holunder.png'},
+    {id:'bionade_orange',name:'Bionade Naturtrübe Orange',price:3.5,icon:'🫧',img:null},
+    {id:'bionade_zitrone',name:'Naturtrübe Zitrone',price:3.5,icon:'🫧',img:'bionade_zitrone.png'},
+    {id:'bionade_blut',name:'Naturtrübe Blutorange',price:3.5,icon:'🫧',img:'bionade_blut.png'},
+    {id:'bionade_joh',name:'Bionade Schwarze Johannisbeere-Rosmarin',price:3.5,icon:'🫧',img:null},
+    {id:'kombucha',name:'Bouche Kombucha',price:4.0,icon:'🫧',img:null},
   ],
   fritz:[
-    {id:'fritz_ingwer',name:'Fritz — Ingwer Limette',price:3.9,icon:'🍋'},
-    {id:'fritz_traube',name:'Fritz — Traube',price:3.9,icon:'🍋'},
-    {id:'fritz_apfel',name:'Fritz — Apfel',price:3.9,icon:'🍋'},
-    {id:'fritz_rhabarber',name:'Fritz — Rhabarber',price:3.9,icon:'🍋'},
-    {id:'fever_tree',name:'Fever Tree',price:3.5,icon:'🍋'},
-    {id:'paloma',name:'Paloma Lemonade Pink Grapefruit',price:3.5,icon:'🍋'},
+    {id:'fritz_ingwer',name:'Fritz — Ingwer Limette',price:3.9,icon:'🍋',img:null},
+    {id:'fritz_traube',name:'Fritz — Traube',price:3.9,icon:'🍋',img:'fritz_traube.png'},
+    {id:'fritz_apfel',name:'Fritz — Apfel',price:3.9,icon:'🍋',img:'fritz_apfel.png'},
+    {id:'fritz_rhabarber',name:'Fritz — Rhabarber',price:3.9,icon:'🍋',img:'fritz_rhababer.png'},
+    {id:'fever_tree',name:'Fever Tree',price:3.5,icon:'🍋',img:null},
+    {id:'paloma',name:'Paloma Lemonade Pink Grapefruit',price:3.5,icon:'🍋',img:null},
   ],
   cola:[
-    {id:'cola',name:'Coca Cola',price:3.3,icon:'🥤'},
-    {id:'cola_light',name:'Coca Cola Light',price:3.3,icon:'🥤'},
-    {id:'cola_zero',name:'Coca Cola Zero',price:3.3,icon:'🥤'},
-    {id:'mate',name:'Mate',price:3.8,icon:'🥤'},
-    {id:'orangina',name:'Orangina Orange',price:3.9,icon:'🥤'},
-    {id:'fuze_zitrone',name:'Fuze Tea Zitrone',price:3.3,icon:'🥤'},
-    {id:'fuze_pfirsich',name:'Fuze Tea Pfirsich',price:3.3,icon:'🥤'},
-    {id:'mono_eis',name:'Mono Eis Tee',price:3.9,icon:'🥤'},
+    {id:'cola',name:'Coca Cola',price:3.3,icon:'🥤',img:'cola.png'},
+    {id:'cola_light',name:'Coca Cola Light',price:3.3,icon:'🥤',img:'cola_light.png'},
+    {id:'cola_zero',name:'Coca Cola Zero',price:3.3,icon:'🥤',img:'cola_zero.png'},
+    {id:'mate',name:'Mate',price:3.8,icon:'🥤',img:null},
+    {id:'orangina',name:'Orangina Orange',price:3.9,icon:'🥤',img:null},
+    {id:'fuze_zitrone',name:'Fuze Tea Zitrone',price:3.3,icon:'🥤',img:null},
+    {id:'fuze_pfirsich',name:'Fuze Tea Pfirsich',price:3.3,icon:'🥤',img:null},
+    {id:'mono_eis',name:'Mono Eis Tee',price:3.9,icon:'🥤',img:'mono_eis.png'},
   ],
   energy:[
-    {id:'redbull_norm',name:'Red Bull Normal',price:4.0,icon:'⚡'},
-    {id:'redbull_free',name:'Red Bull Sugar Free',price:4.0,icon:'⚡'},
-    {id:'vitwell_anti',name:'Vitamin Well Antioxidant',price:3.9,icon:'⚡'},
-    {id:'vitwell_hyd',name:'Vitamin Well Hydrate',price:3.9,icon:'⚡'},
-    {id:'vitwell_rel',name:'Vitamin Well Reload',price:3.9,icon:'⚡'},
+    {id:'redbull_norm',name:'Red Bull Normal',price:4.0,icon:'⚡',img:'redbull_norm.png'},
+    {id:'redbull_free',name:'Red Bull Sugar Free',price:4.0,icon:'⚡',img:'redbull_free.png'},
+    {id:'vitwell_anti',name:'Vitamin Well Antioxidant',price:3.9,icon:'⚡',img:'vitwell_anti.png'},
+    {id:'vitwell_hyd',name:'Vitamin Well Hydrate',price:3.9,icon:'⚡',img:'vitwell_hyd.png'},
+    {id:'vitwell_rel',name:'Vitamin Well Reload',price:3.9,icon:'⚡',img:'vitwell_rel.png'},
   ],
   saft:[
-    {id:'oj',name:'Orangensaft',price:4.5,icon:'🍊'},
-    {id:'ingwer_shot',name:'Ingwer Shot',price:2.5,icon:'🍊'},
+    {id:'oj',name:'Orangensaft',price:4.5,icon:'🍊',img:null},
+    {id:'ingwer_shot',name:'Ingwer Shot',price:2.5,icon:'🍊',img:null},
   ],
 };
 
@@ -281,6 +283,13 @@ Object.values(GETRAENKE).flat().forEach(p=>qty[p.id]=0);
 function fmt(n){return n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function getMinDate(){const d=new Date(Date.now()+72*3600*1000);return d.toISOString().split('T')[0]}
 function formatDE(s){const[y,m,d]=s.split('-');return`${d}.${m}.${y}`}
+
+function imgTag(p,height='90px'){
+  if(p.img){
+    return`<img src="/${p.img}" alt="${p.name}" style="width:100%;height:${height};object-fit:cover;display:block;" onerror="this.parentElement.innerHTML='<span style=\\"font-size:28px\\">${p.icon}</span>';this.parentElement.style.background='${p.bg||'#f7f6f2'}'">`;
+  }
+  return`<span style="font-size:28px">${p.icon}</span>`;
+}
 
 function initDatum(){
   const inp=document.getElementById('f-datum');
@@ -342,8 +351,12 @@ function changeSalat(d){salatQty=Math.max(0,salatQty+d);document.getElementById(
 function changeG(id,d){qty[id]=Math.max(0,qty[id]+d);renderGetraenke();update();}
 
 function prodCard(p,fn){
+  const imgContent=p.img
+    ?`<img src="/${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.classList.add('emoji-fallback');this.parentElement.innerHTML='<span style=\\"font-size:28px\\">${p.icon}</span>';this.parentElement.style.background='${p.bg}'">`
+    :`<span style="font-size:28px">${p.icon}</span>`;
+  const imgBg=p.img?'#f0eeea':p.bg;
   return`<div class="prod-card${qty[p.id]>0?' active':''}">
-    <div class="prod-img" style="background:${p.bg}">${p.icon}</div>
+    <div class="prod-img" style="background:${imgBg}">${imgContent}</div>
     <div class="prod-body">
       <div class="prod-name">${p.name}</div>
       <div class="prod-desc">${p.desc||''}</div>
@@ -358,15 +371,20 @@ function prodCard(p,fn){
     </div>
   </div>`;
 }
+
 function renderAll(){
   Object.entries(SANDWICHES).forEach(([c,ps])=>document.getElementById('cat-'+c).innerHTML=ps.map(p=>prodCard(p,'change')).join(''));
   document.getElementById('cat-sweets').innerHTML=SWEETS.map(p=>prodCard(p,'change')).join('');
 }
+
 function renderGetraenke(){
   Object.entries(GETRAENKE).forEach(([c,ps])=>{
-    document.getElementById('cat-'+c).innerHTML=ps.map(p=>`
-      <div class="g-row${qty[p.id]>0?' active':''}">
-        <span style="font-size:16px">${p.icon}</span>
+    document.getElementById('cat-'+c).innerHTML=ps.map(p=>{
+      const thumbContent=p.img
+        ?`<img src="/${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<span style=\\"font-size:16px\\">${p.icon}</span>'">`
+        :`<span style="font-size:16px">${p.icon}</span>`;
+      return`<div class="g-row${qty[p.id]>0?' active':''}">
+        <div class="g-thumb">${thumbContent}</div>
         <span class="g-name">${p.name}</span>
         <span class="g-price">€ ${fmt(p.price)}</span>
         <div class="qty-ctrl">
@@ -375,7 +393,8 @@ function renderGetraenke(){
           <button class="qb" onclick="changeG('${p.id}',1)">+</button>
         </div>
         <span class="g-sub">${qty[p.id]>0?'€ '+fmt(qty[p.id]*p.price):''}</span>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   });
 }
 
