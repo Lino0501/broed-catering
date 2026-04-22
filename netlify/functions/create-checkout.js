@@ -28,6 +28,16 @@ exports.handler = async (event) => {
       billing_address_collection: 'required',
 invoice_creation: { enabled: true },
       customer_email: data.email,
+      metadata: {
+  name: data.name || '',
+  firma: data.firma || '',
+  datum: data.datum || '',
+  uhrzeit: data.uhrzeit || '',
+  modus: data.modus || '',
+  adresse: data.adresse || '',
+  bestellung: data.bestellung ? data.bestellung.substring(0, 500) : '',
+  sonder: data.sonder || '',
+},
       success_url: 'https://teal-capybara-c25b9e.netlify.app/success.html',
       cancel_url: 'https://teal-capybara-c25b9e.netlify.app/',
     });
