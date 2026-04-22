@@ -80,8 +80,11 @@
   <div class="section-label">Ihre Angaben</div>
   <div class="card">
     <div class="two">
-      <div class="field"><label>Vorname & Nachname</label><input type="text" id="f-name" placeholder="Maria Muster"></div>
-      <div class="field"><label>E-Mail</label><input type="email" id="f-email" placeholder="maria@firma.de"></div>
+      <div class="field"><label>Vorname</label><input type="text" id="f-vorname" placeholder="Maria"></div>
+      <div class="field"><label>Nachname</label><input type="text" id="f-nachname" placeholder="Muster"></div>
+    </div>
+    <div class="field"><label>E-Mail</label><input type="email" id="f-email" placeholder="maria@firma.de"></div>
+    <div class="two">
     </div>
     <div class="field"><label>Firma (für Rechnung)</label><input type="text" id="f-firma" placeholder="Muster GmbH"></div>
     <div class="field"><label>Telefonnummer</label><input type="tel" id="f-tel" placeholder="+49 123 456789"></div>
@@ -290,7 +293,12 @@ function checkDatum(){
   const min=getMinDate();
   if(!val){hint.textContent=`Frühestmöglich: ${formatDE(min)}`;hint.className='field-hint hint-neutral';datumOk=false;}
   else if(val<min){hint.textContent=`Bitte mind. 72h im Voraus. Frühestmöglich: ${formatDE(min)}`;hint.className='field-hint hint-warn';datumOk=false;}
-  else{hint.textContent=`Termin am ${formatDE(val)} verfügbar`;hint.className='field-hint hint-ok';datumOk=true;}
+  else{
+    const d=new Date(val+'T12:00:00');
+    const day=d.getDay();
+    if(day===0||day===6){hint.textContent='Samstag und Sonntag nehmen wir keine Bestellungen an. Bitte wähle einen Werktag.';hint.className='field-hint hint-warn';datumOk=false;}
+    else{hint.textContent=`Termin am ${formatDE(val)} verfügbar`;hint.className='field-hint hint-ok';datumOk=true;}
+  }
   update();
 }
 function setMode(m){
@@ -407,6 +415,7 @@ function update(){
   else if(mode==='delivery'&&!currentZone&&distanceKm===null)msg='Bitte Lieferadresse eingeben und prüfen.';
   else if(mode==='delivery'&&!currentZone&&distanceKm!==null)msg='Lieferung nicht möglich — ausserhalb des Liefergebiets.';
   else if(mode==='delivery'&&currentZone&&sub<minOrd)msg=`Mindestbestellwert: € ${fmt(minOrd)}. Noch € ${fmt(minOrd-sub)} fehlend.`;
+  else if(mode==='pickup'&&sub>0&&sub<50)msg=`Mindestbestellwert für Abholung: € 50,00. Noch € ${fmt(50-sub)} fehlend.`;
 
   if(msg){warn.style.display='block';warn.textContent=msg;cta.disabled=true;}
   else if(sub===0){warn.style.display='none';cta.disabled=true;}
@@ -427,7 +436,7 @@ async function goToCheckout(){
   const total=sub+fee;
 
   const payload={
-    name:document.getElementById('f-name').value,
+    name:document.getElementById('f-vorname').value+' '+document.getElementById('f-nachname').value,
     email:document.getElementById('f-email').value,
     firma:document.getElementById('f-firma').value,
     tel:document.getElementById('f-tel').value,
