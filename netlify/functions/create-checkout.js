@@ -5,7 +5,7 @@ async function addToNotion(data, total) {
   const databaseId = '2e133b0c9d9380e893d9d082a29bed96';
 
   const modus = data.modus && data.modus.includes('Lieferung') ? 'Catering' : 'Abholung';
-  const netto = Math.round((total / 1.19) * 100) / 100;
+  const netto = Math.round((total / 1.07) * 100) / 100;
 
   const datum = data.datum && data.uhrzeit
     ? new Date(`${data.datum}T${data.uhrzeit}:00`).toISOString()
@@ -69,14 +69,13 @@ exports.handler = async (event) => {
       line_items: [{
         price_data: {
           currency: 'eur',
-          product_data: {
-            name: 'Catering-Bestellung Broed',
-          },
+          product: 'prod_UTp9PoxG1fbSdK',
           unit_amount: Math.round(data.total * 100),
         },
         quantity: 1,
       }],
       mode: 'payment',
+      automatic_tax: { enabled: true },
       billing_address_collection: 'required',
       invoice_creation: { enabled: true },
       customer_email: data.email,
