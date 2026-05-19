@@ -32,7 +32,7 @@
     .prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.5rem}
     .prod-card{background:white;border:1px solid #eee;border-radius:12px;overflow:hidden;transition:border-color .15s;display:flex;flex-direction:column}
     .prod-card.active{border-color:#1D9E75;border-width:2px}
-    .prod-img{width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden;background:#f7f6f2}
+    .prod-img{width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden;background:#fff}
     .prod-img img{width:100%;height:100%;object-fit:contain;display:block}
     .prod-body{padding:.6rem .75rem;flex:1;display:flex;flex-direction:column;gap:4px}
     .prod-name{font-size:13px;font-weight:500}
@@ -52,7 +52,7 @@
     .g-list{display:flex;flex-direction:column;gap:5px;margin-bottom:.5rem}
     .g-row{display:flex;align-items:center;gap:10px;padding:.5rem .75rem;background:white;border:1px solid #eee;border-radius:8px;transition:border-color .12s}
     .g-row.active{border-color:#1D9E75}
-    .g-thumb{width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;background:#f7f6f2}
+    .g-thumb{width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;background:#fff}
     .g-thumb img{width:100%;height:100%;object-fit:contain}
     .g-name{flex:1;font-size:13px}
     .g-price{font-size:12px;color:#666;min-width:44px;text-align:right}
@@ -367,7 +367,7 @@ function changeSalat(d){salatQty=Math.max(0,salatQty+d);document.getElementById(
 function changeG(id,d){qty[id]=Math.max(0,qty[id]+d);renderGetraenke();update();}
 
 function prodCard(p,fn){
-  const imgBg = p.img ? '#f0eeea' : p.bg;
+  const imgBg = p.img ? '#fff' : p.bg;
   const imgContent = p.img
     ? `<img src="/images/${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;display:block;" onerror="onImgError(this,'${p.icon}','${p.bg}')">`
     : `<span style="font-size:28px">${p.icon}</span>`;
