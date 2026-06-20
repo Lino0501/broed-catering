@@ -69,7 +69,7 @@ exports.handler = async (event) => {
       line_items: [{
         price_data: {
           currency: 'eur',
-          product: 'prod_UTp9PoxG1fbSdK',
+          product_data: { name: 'Catering' },
           unit_amount: Math.round(data.total * 100),
         },
         quantity: 1,
