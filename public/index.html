@@ -20,6 +20,7 @@
     .field input,.field textarea,.field select{width:100%;font-size:13px;color:#111;background:#f7f6f2;border:1px solid #e5e5e5;border-radius:8px;padding:8px 10px;font-family:inherit}
     .field textarea{resize:vertical;min-height:56px}
     .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .plz-ort-row{display:grid;grid-template-columns:100px 1fr auto;gap:8px;align-items:flex-end}
     .addr-row{display:flex;gap:8px;align-items:flex-end}
     .addr-row .field{flex:1;margin-bottom:0}
     .check-btn{padding:8px 14px;border-radius:8px;border:1px solid #ddd;background:#f7f6f2;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap;flex-shrink:0}
@@ -115,9 +116,14 @@
     </div>
     <div id="delivery-fields">
       <div class="field">
-        <label>Lieferadresse</label>
-        <div class="addr-row">
-          <div class="field"><input type="text" id="f-adresse" placeholder="Strasse, Nr, PLZ, Ort" oninput="resetZone()"></div>
+        <label>Lieferadresse — Straße & Hausnummer</label>
+        <input type="text" id="f-adresse" placeholder="z.B. Hasengasse 5-7" oninput="resetZone()">
+      </div>
+      <div class="field">
+        <label>PLZ & Ort</label>
+        <div class="plz-ort-row">
+          <input type="text" id="f-plz" placeholder="60311" maxlength="5" inputmode="numeric" oninput="resetZone()">
+          <input type="text" id="f-ort" placeholder="Frankfurt am Main" oninput="resetZone()">
           <button class="check-btn" onclick="checkDistance()">Prüfen</button>
         </div>
         <div class="zone-result" id="zone-result"></div>
@@ -339,18 +345,37 @@ function resetZone(){
   currentZone=null;distanceKm=null;
   const r=document.getElementById('zone-result');r.style.display='none';update();
 }
+function getLieferadresse(){
+  const strasse=document.getElementById('f-adresse').value.trim();
+  const plz=document.getElementById('f-plz').value.trim();
+  const ort=document.getElementById('f-ort').value.trim();
+  return {strasse, plz, ort, full: `${strasse}, ${plz} ${ort}`.trim()};
+}
 async function checkDistance(){
-  const addr=document.getElementById('f-adresse').value.trim();
-  if(!addr){showZone('err','Bitte Adresse eingeben.');return;}
+  const {strasse, plz, ort, full} = getLieferadresse();
+  if(!strasse || !plz || !ort){
+    showZone('err','Bitte Straße, PLZ und Ort vollständig eingeben.');
+    return;
+  }
+  if(!/^\d{5}$/.test(plz)){
+    showZone('err','PLZ muss aus 5 Ziffern bestehen.');
+    return;
+  }
   const r=document.getElementById('zone-result');r.className='zone-result zone-ok';r.style.display='block';r.textContent='Wird berechnet…';
   try{
-    const res=await fetch('/api/check-distance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:addr})});
+    const res=await fetch('/api/check-distance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({address:full})});
     const data=await res.json();
-    if(data.status!=='OK'||data.rows[0].elements[0].status!=='OK'){showZone('err','Adresse nicht gefunden.');return;}
+    if(data.status!=='OK'||data.rows[0].elements[0].status!=='OK'){throw new Error('not ok');}
     const el=data.rows[0].elements[0];applyZone(el.distance.value/1000,el.distance.text);
   }catch(e){
-    const mx=addr.match(/\b(6\d{4})\b/);let km=8;
-    if(mx){const p=parseInt(mx[1]);if(p>=60306&&p<=60329)km=2;else if(p>=60300&&p<=60389)km=5;else if(p>=60390&&p<=60599)km=9;else if(p>=60600&&p<=65936)km=13;else km=22;}
+    // PLZ-basierter Fallback wenn Google-API nicht erreichbar
+    const p=parseInt(plz);
+    let km=8;
+    if(p>=60306&&p<=60329)km=2;
+    else if(p>=60300&&p<=60389)km=5;
+    else if(p>=60390&&p<=60599)km=9;
+    else if(p>=60600&&p<=65936)km=13;
+    else km=22;
     applyZone(km,km.toFixed(1)+' km');
   }
 }
@@ -475,6 +500,9 @@ async function goToCheckout(){
   const lieferung_sum = mode==='delivery' && currentZone ? currentZone.fee : 0;
   const total = speisen_sum + getraenke_sum + lieferung_sum;
 
+  // Lieferadresse aus den drei Feldern zusammensetzen
+  const {full: lieferadresseFull} = getLieferadresse();
+
   const payload={
     name:document.getElementById('f-vorname').value+' '+document.getElementById('f-nachname').value,
     email:document.getElementById('f-email').value,
@@ -483,7 +511,7 @@ async function goToCheckout(){
     datum:document.getElementById('f-datum').value,
     uhrzeit:document.getElementById('f-zeit').value,
     modus:mode==='delivery'?`Lieferung (${Math.round(distanceKm||0)}km)`:'Abholung',
-    adresse:mode==='delivery'?document.getElementById('f-adresse').value:'Abholung Taunusanlage 8',
+    adresse:mode==='delivery'?lieferadresseFull:'Abholung Taunusanlage 8',
     rechnungsadresse:document.getElementById('f-rechnung').value,
     bestellung:bestellungLines.join(', '),
     sonder:document.getElementById('f-sonder').value,
