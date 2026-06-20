@@ -65,7 +65,6 @@ function parseGermanAddress(addressStr) {
       country: 'DE',
     };
   }
-  // Fallback: nur Straße, Rest muss in Stripe-Checkout ergänzt werden
   return null;
 }
 
@@ -85,16 +84,22 @@ exports.handler = async (event) => {
       || (data.name && data.name.trim())
       || 'Kunde';
 
-    // Adresse parsen, falls möglich
+    // Adresse parsen oder Platzhalter setzen (für automatic_tax notwendig)
+    // customer_update: address: 'auto' überschreibt die Platzhalter
+    // mit der tatsächlich im Checkout eingegebenen Adresse
     const parsedAddress = parseGermanAddress(data.adresse);
-    const hasCompleteAddress = !!parsedAddress;
+    const customerAddress = parsedAddress || {
+      line1: data.adresse || 'Wird im Checkout ergänzt',
+      postal_code: '60311',  // Frankfurt-Default, wird überschrieben
+      city: 'Frankfurt am Main',
+      country: 'DE',
+    };
 
-    // Stripe-Kunden mit strukturierten Daten anlegen
     const customer = await stripe.customers.create({
       email: data.email,
       name: recipientName,
       phone: data.tel || undefined,
-      address: hasCompleteAddress ? parsedAddress : undefined,
+      address: customerAddress,
       metadata: {
         ansprechpartner: data.name || '',
         firma: data.firma || '',
@@ -115,8 +120,9 @@ exports.handler = async (event) => {
       }],
       mode: 'payment',
       automatic_tax: { enabled: true },
-      // Falls Adresse vollständig vorgeparst: 'auto', sonst noch abfragen
-      billing_address_collection: hasCompleteAddress ? 'auto' : 'required',
+      billing_address_collection: 'required',
+      // Stripe überschreibt Customer-Adresse + Name mit tatsächlichen Checkout-Eingaben
+      customer_update: { address: 'auto', name: 'never' },
       invoice_creation: { enabled: true },
       customer: customer.id,
       metadata: {
@@ -134,7 +140,6 @@ exports.handler = async (event) => {
       cancel_url: 'https://teal-capybara-c25b9e.netlify.app/',
     });
 
-    // Notion-Eintrag erstellen (im Hintergrund, blockiert Checkout nicht)
     addToNotion(data, data.total).catch(err => console.log('Notion failed:', err.message));
 
     return {
