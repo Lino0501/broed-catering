@@ -466,9 +466,14 @@ async function goToCheckout(){
     ...SWEETS.filter(p=>qty[p.id]>0).map(p=>`${p.name} x${qty[p.id]}`),
     ...allG.filter(p=>qty[p.id]>0).map(p=>`${p.name} x${qty[p.id]}`),
   ];
-  const sub=getTotal();
-  const fee=mode==='delivery'&&currentZone?currentZone.fee:0;
-  const total=sub+fee;
+
+  // Steuerlich getrennt: Speisen (7%), Getränke (19%), Lieferung (7%)
+  const speisen_sum = allS.reduce((s,p)=>s+qty[p.id]*p.price,0)
+                    + SWEETS.reduce((s,p)=>s+qty[p.id]*p.price,0)
+                    + salatQty*3.5;
+  const getraenke_sum = allG.reduce((s,p)=>s+qty[p.id]*p.price,0);
+  const lieferung_sum = mode==='delivery' && currentZone ? currentZone.fee : 0;
+  const total = speisen_sum + getraenke_sum + lieferung_sum;
 
   const payload={
     name:document.getElementById('f-vorname').value+' '+document.getElementById('f-nachname').value,
@@ -479,9 +484,13 @@ async function goToCheckout(){
     uhrzeit:document.getElementById('f-zeit').value,
     modus:mode==='delivery'?`Lieferung (${Math.round(distanceKm||0)}km)`:'Abholung',
     adresse:mode==='delivery'?document.getElementById('f-adresse').value:'Abholung Taunusanlage 8',
+    rechnungsadresse:document.getElementById('f-rechnung').value,
     bestellung:bestellungLines.join(', '),
     sonder:document.getElementById('f-sonder').value,
     total:total,
+    speisen_sum:speisen_sum,
+    getraenke_sum:getraenke_sum,
+    lieferung_sum:lieferung_sum,
   };
 
   document.getElementById('cta').disabled=true;
