@@ -1,11 +1,12 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-async function addToNotion(data, total) {
+async function addToNotion(data, total, nettoSpeisen, nettoGetraenke) {
   const notionToken = process.env.NOTION_TOKEN;
   const databaseId = '2e133b0c9d9380e893d9d082a29bed96';
 
   const modus = data.modus && data.modus.includes('Lieferung') ? 'Catering' : 'Abholung';
-  const netto = Math.round((total / 1.07) * 100) / 100;
+  // Netto sauber aus den getrennten Bruttosummen rechnen
+  const netto = Math.round((nettoSpeisen + nettoGetraenke) * 100) / 100;
 
   const datum = data.datum && data.uhrzeit
     ? new Date(`${data.datum}T${data.uhrzeit}:00`).toISOString()
@@ -77,20 +78,23 @@ exports.handler = async (event) => {
 
     console.log('Stripe Key exists:', !!process.env.STRIPE_SECRET_KEY);
     console.log('Total:', data.total);
+    console.log('Speisen:', data.speisen_sum, 'Getränke:', data.getraenke_sum, 'Lieferung:', data.lieferung_sum);
     console.log('Email:', data.email);
 
-    // Empfängername bestimmen: Firma > Person > Fallback
+    // Empfängername: Firma > Person > Fallback
     const recipientName = (data.firma && data.firma.trim())
       || (data.name && data.name.trim())
       || 'Kunde';
 
-    // Adresse parsen oder Platzhalter setzen (für automatic_tax notwendig)
-    // customer_update: address: 'auto' überschreibt die Platzhalter
-    // mit der tatsächlich im Checkout eingegebenen Adresse
-    const parsedAddress = parseGermanAddress(data.adresse);
+    // Rechnungsadresse bevorzugt, Fallback auf Lieferadresse
+    const billingAddressStr = (data.rechnungsadresse && data.rechnungsadresse.trim())
+      || data.adresse
+      || '';
+    const parsedAddress = parseGermanAddress(billingAddressStr);
+    // Platzhalter für automatic_tax wenn Parsing fehlschlägt
     const customerAddress = parsedAddress || {
-      line1: data.adresse || 'Wird im Checkout ergänzt',
-      postal_code: '60311',  // Frankfurt-Default, wird überschrieben
+      line1: billingAddressStr || 'Wird im Checkout ergänzt',
+      postal_code: '60311',
       city: 'Frankfurt am Main',
       country: 'DE',
     };
@@ -108,20 +112,63 @@ exports.handler = async (event) => {
 
     console.log('Customer created:', customer.id, 'as', recipientName);
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{
+    // Line Items dynamisch zusammenbauen (je nach Bestellinhalt)
+    const lineItems = [];
+
+    // Speisen (7% MwSt)
+    if (data.speisen_sum && data.speisen_sum > 0) {
+      lineItems.push({
         price_data: {
           currency: 'eur',
-          product_data: { name: 'Catering' },
-          unit_amount: Math.round(data.total * 100),
+          product_data: { name: 'Speisen', tax_code: 'txcd_40060002' },
+          unit_amount: Math.round(data.speisen_sum * 100),
         },
         quantity: 1,
-      }],
+      });
+    }
+
+    // Getränke (19% MwSt)
+    if (data.getraenke_sum && data.getraenke_sum > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'eur',
+          product_data: { name: 'Getränke', tax_code: 'txcd_99999999' },
+          unit_amount: Math.round(data.getraenke_sum * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    // Lieferung (7% MwSt, folgt dem Speisen-Catering)
+    if (data.lieferung_sum && data.lieferung_sum > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'eur',
+          product_data: { name: 'Lieferung', tax_code: 'txcd_40060002' },
+          unit_amount: Math.round(data.lieferung_sum * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    // Backwards-Compat: Wenn nichts gesplittet ankommt, klassisches Single-Line-Item
+    if (lineItems.length === 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'eur',
+          product_data: { name: 'Catering', tax_code: 'txcd_40060002' },
+          unit_amount: Math.round((data.total || 0) * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: lineItems,
       mode: 'payment',
       automatic_tax: { enabled: true },
       billing_address_collection: 'required',
-      // Stripe überschreibt Customer-Adresse + Name mit tatsächlichen Checkout-Eingaben
       customer_update: { address: 'auto', name: 'never' },
       invoice_creation: { enabled: true },
       customer: customer.id,
@@ -132,6 +179,7 @@ exports.handler = async (event) => {
         uhrzeit: data.uhrzeit || '',
         modus: data.modus || '',
         adresse: data.adresse || '',
+        rechnungsadresse: data.rechnungsadresse || '',
         tel: data.tel || '',
         bestellung: data.bestellung ? data.bestellung.substring(0, 500) : '',
         sonder: data.sonder || '',
@@ -140,7 +188,12 @@ exports.handler = async (event) => {
       cancel_url: 'https://teal-capybara-c25b9e.netlify.app/',
     });
 
-    addToNotion(data, data.total).catch(err => console.log('Notion failed:', err.message));
+    // Netto pro Steuersatz für Notion
+    const nettoSpeisen = ((data.speisen_sum || 0) + (data.lieferung_sum || 0)) / 1.07;
+    const nettoGetraenke = (data.getraenke_sum || 0) / 1.19;
+
+    addToNotion(data, data.total, nettoSpeisen, nettoGetraenke)
+      .catch(err => console.log('Notion failed:', err.message));
 
     return {
       statusCode: 200,
