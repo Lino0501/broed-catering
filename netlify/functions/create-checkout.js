@@ -53,6 +53,22 @@ async function addToNotion(data, total) {
   }
 }
 
+// Parst deutsche Adressen im Format "Straße Nr, PLZ Stadt" oder "Straße Nr PLZ Stadt"
+function parseGermanAddress(addressStr) {
+  if (!addressStr) return null;
+  const match = addressStr.match(/^(.+?)[\s,]+(\d{5})\s+(.+?)$/);
+  if (match) {
+    return {
+      line1: match[1].trim(),
+      postal_code: match[2],
+      city: match[3].trim(),
+      country: 'DE',
+    };
+  }
+  // Fallback: nur Straße, Rest muss in Stripe-Checkout ergänzt werden
+  return null;
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -63,6 +79,29 @@ exports.handler = async (event) => {
     console.log('Stripe Key exists:', !!process.env.STRIPE_SECRET_KEY);
     console.log('Total:', data.total);
     console.log('Email:', data.email);
+
+    // Empfängername bestimmen: Firma > Person > Fallback
+    const recipientName = (data.firma && data.firma.trim())
+      || (data.name && data.name.trim())
+      || 'Kunde';
+
+    // Adresse parsen, falls möglich
+    const parsedAddress = parseGermanAddress(data.adresse);
+    const hasCompleteAddress = !!parsedAddress;
+
+    // Stripe-Kunden mit strukturierten Daten anlegen
+    const customer = await stripe.customers.create({
+      email: data.email,
+      name: recipientName,
+      phone: data.tel || undefined,
+      address: hasCompleteAddress ? parsedAddress : undefined,
+      metadata: {
+        ansprechpartner: data.name || '',
+        firma: data.firma || '',
+      },
+    });
+
+    console.log('Customer created:', customer.id, 'as', recipientName);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -76,9 +115,10 @@ exports.handler = async (event) => {
       }],
       mode: 'payment',
       automatic_tax: { enabled: true },
-      billing_address_collection: 'required',
+      // Falls Adresse vollständig vorgeparst: 'auto', sonst noch abfragen
+      billing_address_collection: hasCompleteAddress ? 'auto' : 'required',
       invoice_creation: { enabled: true },
-      customer_email: data.email,
+      customer: customer.id,
       metadata: {
         name: data.name || '',
         firma: data.firma || '',
@@ -94,7 +134,7 @@ exports.handler = async (event) => {
       cancel_url: 'https://teal-capybara-c25b9e.netlify.app/',
     });
 
-    // Notion Eintrag erstellen (im Hintergrund, blockiert Checkout nicht)
+    // Notion-Eintrag erstellen (im Hintergrund, blockiert Checkout nicht)
     addToNotion(data, data.total).catch(err => console.log('Notion failed:', err.message));
 
     return {
